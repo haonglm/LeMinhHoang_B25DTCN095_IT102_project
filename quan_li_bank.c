@@ -51,7 +51,7 @@ void clear_stdin() {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-// ham them tk moi 
+// case 1 : ham them tk moi 
 void add_account_new() {
     if (accountCount >= MAX_ACCOUNTS) {
         printf("Danh sach tai khoan da day. Khong the them!\n");
@@ -74,11 +74,6 @@ void add_account_new() {
 			continue;
 			}
         
-		if (strchr(newAcc.accountId, ' ') != NULL) {
-            printf("ID khong duoc chua khoang trang!\n");
-            continue;
-        }
-		
         if (find_account_index(newAcc.accountId) != -1) {
             printf("ID da ton tai!\n");
             continue;
@@ -144,7 +139,7 @@ void add_account_new() {
     printf("Them tai khoan thanh cong!\n");
 }
 
-
+// case 2: ham cap nhat thong tin
 void update_account_new() {
 	char id[20];
 	char tmpName[50];
@@ -194,6 +189,72 @@ void update_account_new() {
 	printf("cap nhat thanh cong !!!\n");
 };
 	
+// case 3: quan li trang thai (khoa / xoa)
+void management_status(){
+	char id[20];
+	int choice;
+	
+	printf("\n==== QUAN LY TRANG THAI KHOA & XOA ====\n");
+	printf("nhap Id tai khoan can thao tac: ");
+	
+	//nhap Id
+	if(fgets(id, sizeof(id), stdin) == NULL){
+		printf("Loi nhap ID !!!\n");
+		return;
+	}
+	strip_newline(id);
+	
+	// validate: tim kiem tai khoan
+	int idx = find_account_index(id);
+	if (idx == -1){
+		printf("khong tim thay tai khoan co ID: %s", id);
+		return;
+	}
+	//hien thi thong tin hien tai
+	printf("\nTai khoan [%s] hien tai:\n",accounts[idx].accountId);
+	printf("Ho ten: %s\n",accounts[idx].fullName);
+	printf("So du: %.2lf\n",accounts[idx].balance);
+	printf("trang thai: %s\n",accounts[idx].status == 1 ? "kich hoat (1)" : "khoa (0)");
+	
+	//lua chon hanh dong(khoa / xoa)
+	printf("\nchon thao tac:\n");
+	printf("1. khoa tai khoan. \n");
+	printf("2. xoa tai khoan. \n");
+	printf("moi ban nhap lua chon (1 or 2): ");
+	
+	// xu ly lua chon va loi nhap
+	if(scanf("%d",&choice) != 1 || (choice != 1 && choice != 2)){
+		printf("loi lua chon khong hop le. vui long thu lai !!!\n");
+		clear_stdin();
+		return;
+	}
+	clear_stdin();
+	
+	if(choice == 1){
+		if(accounts[idx].status == 0){
+			printf("tai khoan da bi khoa truoc do !!!\n");
+		}else{
+			accounts[idx].status = 0;
+			printf("tai khoan [%s] da bi khoa thanh cong. \n",accounts[idx].accountId);
+			printf("tai khoan se khong the thuc hien giao dich chuyen tien nua. \n");
+		}
+	}else if(choice == 2) {
+		// kt so du truoc khi delete
+		if(accounts[idx].balance > 0){
+			printf("loi: tai khoan [%s] van con so du (%.2lf). khong the xoa vinh vien. \n", id, accounts[idx].balance);
+			return;
+		}
+		
+		//xu ly xoa bang cach dich phan tu
+		for(int i = idx; i < accountCount ; i++){
+			accounts[i] = accounts[i + 1];
+		}
+		accountCount--;
+		printf("tai khoan [%s] da bi xoa vinh vien khoi he thong !!!\n", id);
+	}
+	
+	
+}
 
 int main(){
 
@@ -222,6 +283,7 @@ int main(){
     	update_account_new();
         break;
     case 3:
+    	management_status();
         break;
     case 4:
         break;
