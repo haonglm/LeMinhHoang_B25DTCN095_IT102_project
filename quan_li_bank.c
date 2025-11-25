@@ -191,48 +191,67 @@ void update_account_new() {
 	char id[20];
 	char tmpName[50];
 	char tmpPhone[20];
-	
+	int idx;
+	int flag = -1;
+	while(1){
 	printf("nhap ID tai khoan can cap nhat: ");
 	fgets(id, sizeof(id), stdin);
 	strip_newline(id);
-
 	
-	int idx = find_account_index(id);
-	if(idx == -1){
-		printf("loi khong tim thay tai khoan !!!\n");
-		return;	
-	} 
+	if(strcmp(id, "") == 0){
+		printf("id khong duoc de trong\n");
+		continue;
+	}
+	
+	for(int i = 0; i < accountCount; i++){
+		if(strcmp(id, accounts[i].accountId) == 0){
+			flag = i;
+			break;
+		}
+	}
+	if(flag == -1){
+		printf("khong tim thay tai khoan.\n");
+		continue;	
+		}
+		break;
+	}
 	printf("thong tin hien tai: \n");
-	printf("ten: %s\n",accounts[idx].fullName);
-	printf("sdt: %s\n",accounts[idx].phone);
-	 
+	printf("ten: %s\n",accounts[flag].fullName);
+	printf("sdt: %s\n",accounts[flag].phone);
+	
 	printf("nhap ten moi (neu khong thi enter de giu nguyen): ");
 	fgets(tmpName, sizeof(tmpName), stdin);
 	strip_newline(tmpName);
-	 
+	if(strcmp(tmpName,"") == 0){
+		printf("thong tin duoc giu nguyen.\n");
+	}else{
+		strcpy(accounts[flag].fullName, tmpName);
+	}
 	
+	int isDuplicate = 0;
+	while(1){
 	printf("nhap sdt moi (neu khong thi enter de giu nguyen): ");
 	fgets(tmpPhone, sizeof(tmpPhone), stdin);
 	strip_newline(tmpPhone);
-	//cap nhat ten
-	if(strlen(tmpName) > 0){
-		strncpy(accounts[idx].fullName, tmpName, sizeof(accounts[idx].fullName) - 1);
-		accounts[idx].fullName[sizeof(accounts[idx].fullName) - 1] = '\0';
-	}
-	
 	
 	//kiem tra sdt trung
-	if(strlen(tmpPhone) > 0){
 		for (int i = 0; i < accountCount; i++){
-			if(i != idx && strcmp(accounts[i].phone, tmpPhone) == 0){
-				printf("loi sdt da ton tai !!!\n");
-				return;
+			if(strcmp(accounts[i].phone, tmpPhone) == 0){
+				isDuplicate = 1;
+				break;
 			}
 		}
+		
+		if(isDuplicate == 1){
+			printf("loi sdt da ton tai !!!\n");
+			continue;
+		}
 		//cap nhat sdt moi(chi chay neu khong bi trung)
-		strncpy(accounts[idx].phone, tmpPhone, sizeof(accounts[idx].phone) - 1);
-		accounts[idx].phone[sizeof(accounts[idx].phone) - 1]= '\0';
-	}
+		strncpy(accounts[flag].phone, tmpPhone, sizeof(accounts[flag].phone) - 1);
+		accounts[flag].phone[sizeof(accounts[flag].phone) - 1]= '\0';
+	break;
+}
+
 	printf("cap nhat thanh cong !!!\n");
 };
 	
@@ -240,23 +259,31 @@ void update_account_new() {
 void management_status(){
 	char id[20];
 	int choice;
-	
+	int idx;
 	printf("\n==== QUAN LY TRANG THAI KHOA & XOA ====\n");
+	while(1){
 	printf("nhap Id tai khoan can thao tac: ");
 	
 	//nhap Id
 	if(fgets(id, sizeof(id), stdin) == NULL){
-		printf("Loi nhap ID !!!\n");
-		return;
+		printf("Loi nhap ID. vui long thu lai !!!\n");
+		continue;
 	}
 	strip_newline(id);
 	
+	if(strlen(id) == 0){
+		printf("id khong duoc de trong !!!\n");
+		continue;
+	} 
 	// validation: tim kiem tai khoan
-	int idx = find_account_index(id);
+	idx = find_account_index(id);
 	if (idx == -1){
-		printf("khong tim thay tai khoan co ID: %s", id);
-		return;
+		printf("khong tim thay tai khoan co ID: %s. vui long nhap lai !!\n", id);
+		continue;
+		}
+		break; 
 	}
+	
 	//hien thi thong tin hien tai
 	printf("\nTai khoan [%s] hien tai:\n",accounts[idx].accountId);
 	printf("Ho ten: %s\n",accounts[idx].fullName);
@@ -267,15 +294,21 @@ void management_status(){
 	printf("\nchon thao tac:\n");
 	printf("1. khoa tai khoan. \n");
 	printf("2. xoa tai khoan. \n");
-	printf("moi ban nhap lua chon (1 or 2): ");
 	
-	// xu ly lua chon va loi nhap
-	if(scanf("%d",&choice) != 1 || (choice != 1 && choice != 2)){
-		printf("loi lua chon khong hop le. vui long thu lai !!!\n");
-		clear_stdin();
-		return;
+	char tmp[10]; // bien tam de hung cac phim nhap vao  
+	while(1){
+	printf("moi ban nhap lua chon (1 or 2): ");
+	fgets(tmp, sizeof(tmp), stdin);
+	
+	if(tmp[0] == '1' && tmp[1] == '\n'){
+		choice = 1;
+		break;
+	} else if (tmp[0] == '2' && tmp[1] == '\n'){
+		choice = 2;
+		break;
+		}
+	printf("loi nhap !!! vui long chon 1 hoac 2.\n");
 	}
-	clear_stdin();
 	
 	if(choice == 1){
 		if(accounts[idx].status == 0){
@@ -293,7 +326,7 @@ void management_status(){
 		}
 		
 		//xu ly xoa bang cach dich phan tu
-		for(int i = idx; i < accountCount ; i++){
+		for(int i = idx; i < accountCount - 1; i++){
 			accounts[i] = accounts[i + 1];
 		}
 		accountCount--;
@@ -357,7 +390,8 @@ void search_account(){
             printf("So du:     %.2lf\n", accounts[i].balance);
             printf("Trang thai: %s\n", accounts[i].status == 1 ? "Kich hoat" : "Khoa");
 			// neu ng dung chon lua chon 1 thi kq la duy nhat ,thoat som de tang toc
-            if (choice == 1) break;
+            if (choice == 1);
+			break;
 		}
 	}
 	
