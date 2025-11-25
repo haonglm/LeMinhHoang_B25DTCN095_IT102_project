@@ -29,6 +29,53 @@ int accountCount = 0;
 Transaction transactions[MAX_TRANSACTIONS];
 int transactionCount = 0;
 
+//nguyen mau ham 
+int find_account_index(const char id[]); 
+void strip_newline(char str[]);
+void clear_stdin();
+void add_account_new();
+void update_account_new();
+void management_status();
+void search_account();
+
+int main(){
+
+    int choice;
+    while(1){
+    printf("\n========= QUAN LY TAI KHOAN NGAN HANG  =========\n");
+    printf("1. them tai khoan moi\n");
+    printf("2. cap nhat thong tin\n");
+    printf("3. quan ly trang thai (khoa / xoa)\n");
+    printf("4. tra cuu (tim kiem)\n");
+    printf("5. danh sach (phan trang)\n");
+    printf("6. sap xep danh sach\n");
+    printf("7. giao dich chuyen khoan\n");
+    printf("8. lich su giao dich\n");
+    printf("0. thoat chuong trinh\n");
+
+    printf("moi ban nhap lua chon: ");
+    scanf("%d",&choice);
+	clear_stdin(); 
+    
+	switch(choice){
+    case 1:
+    	add_account_new();
+        break;
+    case 2:
+    	update_account_new();
+        break;
+    case 3:
+    	management_status();
+        break;
+    case 4:
+    	search_account();
+        break;
+    }
+}
+    return 0;
+}
+
+
 //tim tai khoan theo id
 int find_account_index(const char id[]) {
     for (int i = 0; i < accountCount; i++) {
@@ -204,7 +251,7 @@ void management_status(){
 	}
 	strip_newline(id);
 	
-	// validate: tim kiem tai khoan
+	// validation: tim kiem tai khoan
 	int idx = find_account_index(id);
 	if (idx == -1){
 		printf("khong tim thay tai khoan co ID: %s", id);
@@ -256,38 +303,70 @@ void management_status(){
 	
 }
 
-int main(){
-
-    int choice;
-    while(1){
-    printf("\n========= QUAN LY TAI KHOAN NGAN HANG  =========\n");
-    printf("1. them tai khoan moi\n");
-    printf("2. cap nhat thong tin\n");
-    printf("3. quan ly trang thai (khoa / xoa)\n");
-    printf("4. tra cuu (tim kiem)\n");
-    printf("5. danh sach (phan trang)\n");
-    printf("6. sap xep danh sach\n");
-    printf("7. giao dich chuyen khoan\n");
-    printf("8. lich su giao dich\n");
-    printf("0. thoat chuong trinh\n");
-
-    printf("moi ban nhap lua chon: ");
-    scanf("%d",&choice);
-	clear_stdin(); 
-    
-	switch(choice){
-    case 1:
-    	add_account_new();
-        break;
-    case 2:
-    	update_account_new();
-        break;
-    case 3:
-    	management_status();
-        break;
-    case 4:
-        break;
+// case 4: 
+void search_account(){
+	int choice;
+	char keyword[50];
+	int foundCount = 0;
+	
+	printf("\n=== CHUC NANG TRA CUU TAI KHOAN ===\n");
+	printf("chon tieu chi tra cuu: \n");
+	printf("1. tim kiem theo Account ID\n");
+	printf("2. tim theo ho ten\n");
+	printf("moi ban nhap lua chon (1 or 2): ");
+	
+	// su ly doc va loi nhap
+	if (scanf("%d", &choice) != 1 || (choice != 1 && choice != 2)) {
+        printf("Loi: Lua chon khong hop le. Thao tac bi huy.\n");
+        clear_stdin();
+        return;
     }
-}
-    return 0;
-}
+    clear_stdin(); // Xoa bo nho dem sau scanf
+    
+    printf("nhap tu khoa tim kiem: ");
+    if(fgets(keyword, sizeof(keyword), stdin) == NULL){
+    	printf("loi nhap xoa.\n");
+    	return;
+	}
+	strip_newline(keyword);
+	
+	//validation: kiem tra rong
+	if(strlen(keyword) == 0){
+		printf("tu khoa khong duoc rong !!\n");
+		return;
+	}
+	printf("\nket qua tim kiem: \n");
+	
+	for(int i = 0; i < accountCount; i++){
+		int match = 0;
+		if(choice == 1){ //tim kiem tk theo account ID
+			if(strcmp(accounts[i].accountId, keyword) == 0){
+				match = 1;
+			}
+		} else if (choice == 2) {
+			if(strstr(accounts[i].fullName, keyword) != NULL){
+				match = 1;
+			}
+		}
+		if(match){
+            foundCount++;
+            printf("----------------------------------------\n");
+            printf("ID:        %s\n", accounts[i].accountId);
+            printf("Ho ten:    %s\n", accounts[i].fullName);
+            printf("Dien thoai: %s\n", accounts[i].phone);
+            printf("So du:     %.2lf\n", accounts[i].balance);
+            printf("Trang thai: %s\n", accounts[i].status == 1 ? "Kich hoat" : "Khoa");
+			// neu ng dung chon lua chon 1 thi kq la duy nhat ,thoat som de tang toc
+            if (choice == 1) break;
+		}
+	}
+	
+	printf("------------------------------------\n");
+	if(foundCount == 0){
+		//output : that bai
+		printf("khong co ket qua phu hop.\n");
+	}else{
+		//out put : thanh cong
+		printf("tim thay %d tai khoan", foundCount);
+	}
+} 
