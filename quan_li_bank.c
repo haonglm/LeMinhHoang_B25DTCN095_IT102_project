@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include<ctype.h>
 
 #define MAX_ACCOUNTS 100
 #define MAX_TRANSACTIONS 1000
@@ -24,8 +25,47 @@ typedef struct{
 } Transaction; // giao dich  
 
 //luu du lieu trong bo nho
-Account accounts[MAX_ACCOUNTS];
-int accountCount = 0;
+Account accounts[MAX_ACCOUNTS] = {
+    {"AC1001","Nguyen Van A","0987000001",5000,1},
+    {"AC1002","Tran Thi B","0987000002",6200,1},
+    {"AC1003","Le Van C","0987000003",7400,1},
+    {"AC1004","Pham Thi D","0987000004",5100,1},
+    {"AC1005","Do Van E","0987000005",3300,1},
+    {"AC1006","Nguyen Van F","0987000006",8800,1},
+    {"AC1007","Hoang Thi G","0987000007",9200,1},
+    {"AC1008","Bui Van H","0987000008",1500,1},
+    {"AC1009","Dang Thi I","0987000009",2700,1},
+    {"AC1010","Ngo Van J","0987000010",4600,1},
+
+    {"AC1011","Nguyen Van K","0987000011",5100,1},
+    {"AC1012","Le Thi L","0987000012",2300,1},
+    {"AC1013","Pham Van M","0987000013",9000,1},
+    {"AC1014","Tran Thi N","0987000014",7800,1},
+    {"AC1015","Hoang Van O","0987000015",4100,1},
+    {"AC1016","Do Thi P","0987000016",3200,1},
+    {"AC1017","Bui Van Q","0987000017",1500,1},
+    {"AC1018","Ngo Thi R","0987000018",2200,1},
+    {"AC1019","Dang Van S","0987000019",3300,1},
+    {"AC1020","Le Thi T","0987000020",9900,1},
+
+    {"AC1021","Nguyen Van U","0987000021",7700,1},
+    {"AC1022","Tran Thi V","0987000022",6600,1},
+    {"AC1023","Pham Van W","0987000023",5500,1},
+    {"AC1024","Do Thi X","0987000024",4300,1},
+    {"AC1025","Hoang Van Y","0987000025",8000,1},
+    {"AC1026","Le Thi Z","0987000026",9500,1},
+    {"AC1027","Nguyen Thanh A","0987000027",3100,1},
+    {"AC1028","Tran Minh B","0987000028",7200,1},
+    {"AC1029","Pham Hong C","0987000029",5600,1},
+    {"AC1030","Do Kieu D","0987000030",6400,1},
+
+    {"AC1031","Hoang Bao E","0987000031",8700,1},
+    {"AC1032","Nguyen Lan F","0987000032",9200,1},
+    {"AC1033","Tran My G","0987000033",4800,1},
+    {"AC1034","Le Quoc H","0987000034",3000,1},
+    {"AC1035","Pham Tuan I","0987000035",5100,1},
+};
+int accountCount = 35;
 Transaction transactions[MAX_TRANSACTIONS];
 int transactionCount = 0;
 
@@ -37,6 +77,8 @@ void add_account_new();
 void update_account_new();
 void management_status();
 void search_account();
+void Pagination();
+void sort_accounts();
 
 int main(){
 
@@ -70,6 +112,12 @@ int main(){
     case 4:
     	search_account();
         break;
+    case 5:
+		Pagination(); 
+		break; 
+	case 6:
+		sort_accounts();
+		break;
     }
 }
     return 0;
@@ -154,12 +202,31 @@ void add_account_new() {
             continue;
         }
         strip_newline(tmpPhone);
-
+		//kiem tra rong  
         if (strlen(tmpPhone) == 0){
             printf("sdt khong de trong, nhap lai !!!\n");
 			continue;
 			}
-        
+        //kiem tra do dai
+		if(strlen(tmpPhone) != 10) {
+			printf("sdt phai du 10 so, vui long nhap lai.\n");
+			continue;
+		}
+		
+		//kiem tra ky tu 
+		int letter = 0; //bien flag, 0 la khong co chu, 1 la co chu 
+		for(int i = 0; i < strlen(tmpPhone); i++){
+			if(isdigit(tmpPhone[i]) == 0){  // tra ve 0 nghia la khong phai so
+				letter = 1;
+				break;
+			}
+		}
+		if(letter == 1){
+			printf("loi so dien thoai chi co 10 so, khong phai chu cai !!!\n");
+			continue;
+		}
+		
+		//kiem tra trung lap
 		int duplicate = 0;
         for (int i = 0; i < accountCount; i++) {
             if (strcmp(accounts[i].phone, tmpPhone) == 0) {
@@ -191,7 +258,6 @@ void update_account_new() {
 	char id[20];
 	char tmpName[50];
 	char tmpPhone[20];
-	int idx;
 	int flag = -1;
 	while(1){
 	printf("nhap ID tai khoan can cap nhat: ");
@@ -236,7 +302,7 @@ void update_account_new() {
 	
 	//kiem tra sdt trung
 		for (int i = 0; i < accountCount; i++){
-			if(strcmp(accounts[i].phone, tmpPhone) == 0){
+			if(i != flag && strcmp(accounts[i].phone, tmpPhone) == 0){
 				isDuplicate = 1;
 				break;
 			}
@@ -253,7 +319,7 @@ void update_account_new() {
 }
 
 	printf("cap nhat thanh cong !!!\n");
-};
+}
 	
 // case 3: quan li trang thai (khoa / xoa)
 void management_status(){
@@ -350,12 +416,10 @@ void search_account(){
 	
 	// su ly doc va loi nhap
 	if (scanf("%d", &choice) != 1 || (choice != 1 && choice != 2)) {
-        printf("Loi: Lua chon khong hop le. Thao tac bi huy.\n");
         clear_stdin();
         return;
     }
     clear_stdin(); // Xoa bo nho dem sau scanf
-    
     printf("nhap tu khoa tim kiem: ");
     if(fgets(keyword, sizeof(keyword), stdin) == NULL){
     	printf("loi nhap xoa.\n");
@@ -390,8 +454,7 @@ void search_account(){
             printf("So du:     %.2lf\n", accounts[i].balance);
             printf("Trang thai: %s\n", accounts[i].status == 1 ? "Kich hoat" : "Khoa");
 			// neu ng dung chon lua chon 1 thi kq la duy nhat ,thoat som de tang toc
-            if (choice == 1);
-			break;
+            if (choice == 1) break;
 		}
 	}
 	
@@ -402,5 +465,95 @@ void search_account(){
 	}else{
 		//out put : thanh cong
 		printf("tim thay %d tai khoan", foundCount);
+	}
+} 
+
+//case 5:
+void Pagination() {
+	int page_number;
+	int page_size = 10;
+	
+	printf("\n==== DANH SACH TAI KHOAN PHAN TRANG ====\n"); 
+	
+	while(1){
+		//tinh tong so trang
+		int total_pages = (accountCount + page_size - 1) / page_size; 
+	
+	// trang muon xem  
+	while(1){
+            printf("Nhap trang muon xem (1 - %d): ", total_pages);
+            if(scanf("%d", &page_number) != 1){
+                printf("Loi nhap so!\n");
+                clear_stdin();
+                continue;
+            }
+            clear_stdin();
+
+            if(page_number <= 0 || page_number > total_pages){
+                printf("Loi: Trang %d khong ton tai (Chi co tu 1 den %d).\n", page_number, total_pages);
+                continue;
+            }
+            break;
+        }
+	
+	//tinh chi so bat dau va ket thuc  
+	long start_index = (long) (page_number - 1) * page_size;
+	long end_index = start_index + page_size;
+	if(end_index > accountCount) end_index = accountCount;
+	
+	//in 
+	printf("\nTrang %d / %d\n",page_number, total_pages);
+	for(long i = start_index; i < end_index; i++){
+		// STT, accountID, ho ten, sdt, so du, trang 
+		printf("%ld. %s | %s | %s | %.2f | %s\n",i+1, accounts[i].accountId, accounts[i].fullName, accounts[i].phone, accounts[i].balance, accounts[i].status == 1 ? "kich hoat" : "khoa"); 
+	} 
+	return;
+	}	 
+} 
+
+void sort_accounts(){
+	int choice;
+	char tmp[10];
+	
+	printf("\n=== SAP XEP DANH SACH TAI KHOAN ===\n");
+	printf("1. sap xep theo so du giam dan.\n");
+	printf("2. sap xep theo ten (A-Z).\n");
+	//nhap lua chon
+	while(1) {
+        printf("Moi chon kieu sap xep (1 or 2): ");
+        fgets(tmp, sizeof(tmp), stdin);
+
+        if (tmp[0] == '1' && tmp[1] == '\n') {
+            choice = 1;
+            break;
+        } 
+        else if (tmp[0] == '2' && tmp[1] == '\n') {
+            choice = 2;
+            break;
+        }
+        printf("Loi: Vui long chon 1 hoac 2!\n");
+    }
+    //thuc hien sap xep
+    Account temp; //bien doi vi tri
+    for(int i = 0; i < accountCount - 1; i++){
+    	for(int j = i + 1; j < accountCount; j++){
+    		int swap = 0; // bien co de xem co can doi cho khong
+    		// xep theo so du
+    		if(choice == 1){
+    			if(accounts[i].balance < accounts[j].balance){
+    				swap = 1;
+				}
+			} else {
+				//xep theo ten
+				if(strcmp(accounts[i].fullName, accounts[j].fullName) > 0){
+					swap = 1;
+				}
+			}	
+			if(swap){
+				temp = accounts[i];
+				accounts[i] = accounts[j];
+				accounts[j] = temp;
+			}
+		}
 	}
 } 
