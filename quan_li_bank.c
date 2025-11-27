@@ -2,6 +2,7 @@
 #include<string.h>
 #include<stdlib.h>
 #include<ctype.h>
+#include<time.h>
 
 #define MAX_ACCOUNTS 100
 #define MAX_TRANSACTIONS 1000
@@ -73,12 +74,14 @@ int transactionCount = 0;
 int find_account_index(const char id[]); 
 void strip_newline(char str[]);
 void clear_stdin();
+void get_current_date(char *dateStr);
 void add_account_new();
 void update_account_new();
 void management_status();
 void search_account();
 void Pagination();
 void sort_accounts();
+void transfer_money();
 
 int main(){
 
@@ -118,6 +121,11 @@ int main(){
 	case 6:
 		sort_accounts();
 		break;
+	case 7:
+		transfer_money();
+		break;
+	case 0:
+		break; 
     }
 }
     return 0;
@@ -145,6 +153,12 @@ void clear_stdin() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
+
+void get_current_date(char *dateStr){
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	sprintf(dateStr, "%04d/%02d/%02d", tm.tm_year +1900, tm.tm_mon + 1, tm.tm_mday);
+} 
 
 // case 1 : ham them tk moi 
 void add_account_new() {
@@ -385,7 +399,7 @@ void management_status(){
 			printf("tai khoan se khong the thuc hien giao dich chuyen tien nua. \n");
 		}
 	}else if(choice == 2) {
-		// kt so du truoc khi delete
+		// kiem tra so du truoc khi delete
 		if(accounts[idx].balance > 0){
 			printf("loi: tai khoan [%s] van con so du (%.2lf). khong the xoa vinh vien. \n", id, accounts[idx].balance);
 			return;
@@ -557,3 +571,148 @@ void sort_accounts(){
 		}
 	}
 } 
+
+//case 7:
+void transfer_money(){
+	char senderID[20];
+	char receiverID[20];
+	char strAmount[50];
+	double amount;
+	int sIdx = -1; // index ng gui
+	int rIdx = -1; // index ng nhan
+	
+	printf("\n====== GIAO DICH CHUYEN KHOAN ======\n");
+	
+	//nguoi gui
+	while(1){
+		printf("\nNhap ID nguoi gui: ");
+		if(fgets(senderID, sizeof(senderID), stdin) == NULL) continue;
+		strip_newline(senderID);
+		
+		if(strlen(senderID) == 0){
+			printf("ID khong duoc de trong, vui long nhap lai !!!\n");
+			continue;
+		}
+		
+		//kiem tra ton tai
+		sIdx = find_account_index(senderID);
+		if(sIdx == -1){
+			printf("loi !!! ID nguoi gui khong co trong he thong !!!\n");
+			continue;
+		}
+		
+		//check trang thai tk
+		if(accounts[sIdx].status == 0){
+			printf("loi !!! tai khoan nay dang bi khoa (status = 0).\n");
+			continue;
+		}
+		
+		//neu dung het thi hien thi
+		printf("nguoi gui: %s (so du: %.2lf)\n",accounts[sIdx].fullName, accounts[sIdx].balance);
+		break;
+	}
+	
+	//nguoi nhan
+	while(1){
+		printf("\nNHap ID nguoi nhan: ");
+		if(fgets(receiverID, sizeof(receiverID), stdin) == NULL) continue;
+		strip_newline(receiverID);
+		
+		//kiem tra trong
+		if(strlen(receiverID) == 0){
+			printf("loi !!! ID khong duoc de trong.\n");
+			continue;
+		}
+		
+		//check ton tai
+		rIdx = find_account_index(receiverID);
+		if(rIdx == -1){
+			printf("loi !!! ID nguoi nhan khong ton tai.\n");
+			continue;
+		}
+		
+		// kiem tra trung
+		if(strcmp(senderID, receiverID) == 0){
+			printf("loi !!! nguoi dung khong duoc chuyen tien cho chinh minh.\n");
+			continue;
+		}
+		
+		//kiem tra trang thai
+		if(accounts[rIdx].status == 0){
+			printf("loi !!! tai khoan nguoi dung dang bi khoa, khong the nhan tien.\n");
+			continue;
+		}
+		
+		//dung het thi in
+		printf("nguoi nhan: %s\n",accounts[rIdx].fullName);
+		break;
+	}
+	
+	//nhap tien
+	while(1){
+		printf("\nNhap so tien can chuyen: ");
+		if(fgets(strAmount, sizeof(strAmount), stdin) == NULL) continue;
+		strip_newline(strAmount);
+		
+		//kiem tra rong
+		if(strlen(strAmount) == 0){
+			printf("loi !!! so tien khong duoc de trong.\n");
+			continue;
+		}
+		
+		//kiem tra ky tu
+		int isValid = 1; // bien co ban dau la dung 
+		for(int i = 0; i < strlen(strAmount); i++){
+			if(isdigit(strAmount[i]) == 0 && strAmount[i] != '.'){
+				isValid = 0;
+				break;
+			}
+		}
+		if(isValid == 0){
+			printf("loi !!! so tien khong duoc chua chu cai.\n");
+			continue;
+		}
+		// chuyen chuoi "5000" thanh 5000.0
+		amount = atof(strAmount);
+		
+		if(amount == 0) return; // neu nhap 0 thi thoat ve menu
+		if(amount <= 0){
+			printf("loi !! so tien phai > 0.\n");
+			continue;
+		}
+		
+		// kiem tra so du
+		if(amount > accounts[sIdx].balance){
+			printf("so du khong du (tai khoan con: %.2lf)",accounts[sIdx].balance);
+			continue;
+		}
+		break;
+	}
+	
+	//tru va cong tien
+	accounts[sIdx].balance -= amount;
+	accounts[rIdx].balance += amount;
+	
+	if(transactionCount < MAX_TRANSACTIONS){
+		Transaction newtrans;
+		
+		//tu dong in ma giao dich: TR001, TR002, ...
+		sprintf(newtrans.transId, "TR%04d", transactionCount + 1);
+		// copy thong tin vao bien lai
+		strcpy(newtrans.senderId, senderID);
+		strcpy(newtrans.receiverId, receiverID);
+		
+		newtrans.amount = amount;
+		strcpy(newtrans.type,"transfer"); // loai giao dich
+		//goi ham lay ngay gio
+		get_current_date(newtrans.date);
+		//luu vao mang va tang bien dem so lan giao dich len 1
+		transactions[transactionCount++] = newtrans;
+	}else{
+		printf("canh bao !! bo nho day, khong the luu lich su.\n");
+	}
+	
+	printf("\n===== CHUYEN KHOAN THANH CONG =====\n");
+	printf("ma giao dich: %s\n",transactions[transactionCount-1].transId);
+	printf("so du moi cua ban: %.2lf\n", accounts[sIdx].balance);
+}
